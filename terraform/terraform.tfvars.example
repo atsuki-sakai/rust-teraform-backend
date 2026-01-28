@@ -1,0 +1,20 @@
+# =============================================================================
+# Required Variables
+# =============================================================================
+
+project_id      = "rust-backend-485100"
+container_image = "gcr.io/rust-backend-485100/todo-api:latest"
+
+# =============================================================================
+# Optional Variables (defaults shown)
+# =============================================================================
+
+# region                  = "asia-northeast1"
+# environment             = "dev"
+# db_tier                 = "db-f1-micro"
+# db_name                 = "todo_db"
+# db_user                 = "todo_user"
+# cloud_run_memory        = "256Mi"
+# cloud_run_cpu           = "1"
+# cloud_run_min_instances = 0
+# cloud_run_max_instances = 2
