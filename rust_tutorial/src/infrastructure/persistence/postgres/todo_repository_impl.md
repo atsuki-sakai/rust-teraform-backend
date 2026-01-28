@@ -28,9 +28,12 @@ sqlx::query_as::<_, Todo>(
 - `.bind(...)`: ユーザーからの入力を安全に SQL に埋め込みます（SQLインジェクション対策）。
 
 ### 検索 (find_by_id)
-```rust
-    SELECT ... FROM todos WHERE id = $1 AND user_id = $2
+    async fn find_by_id(&self, id: TodoId, user_id: Uuid) -> AppResult<Option<Todo>> {
+        // ...
+        WHERE id = $1 AND user_id = $2
+    }
 ```
+- `id` の型は `TodoId` ですが、`#[sqlx(transparent)]` のおかげで、そのまま SQL のパラメータとして渡せます。
 - `user_id` も条件に含めることで、**他人の Todo を勝手に見れないように** しています。
 
 ### 一覧・ページネーション (find_all_by_user)

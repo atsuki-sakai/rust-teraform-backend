@@ -5,7 +5,9 @@ use sqlx::PgPool;
 
 use crate::domain::repositories::{TodoRepository, UserRepository};
 use crate::infrastructure::auth::jwt::JwtConfig;
-use crate::infrastructure::persistence::postgres::{PostgresTodoRepository, PostgresUserRepository};
+use crate::infrastructure::persistence::postgres::{
+    PostgresTodoRepository, PostgresUserRepository,
+};
 use crate::shared::error::AppResult;
 
 #[derive(Clone)]
@@ -20,8 +22,7 @@ impl AppState {
     pub async fn new() -> AppResult<Self> {
         dotenvy::dotenv().ok();
 
-        let database_url =
-            std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
         let db_pool = PgPoolOptions::new()
             .max_connections(5)

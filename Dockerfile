@@ -1,40 +1,25 @@
-# Use a Rust base image for the builder stage
-FROM rust:1.84-slim-bookworm as builder
-
+# Builder stage
+FROM rust:1.93-slim-bookworm AS chef
+RUN apt-get update && apt-get install -y pkg-config libssl-dev curl && rm -rf /var/lib/apt/lists/*
+RUN cargo install cargo-chef
 WORKDIR /app
 
-# Install system dependencies (needed for some crates)
-RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-# Create a blank project to cache dependencies
-RUN cargo init
-COPY Cargo.toml Cargo.lock ./
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+# Build dependencies - this is the caching layer!
+RUN cargo chef cook --release --recipe-path recipe.json
+# Copy application source code
+COPY . .
+# Build application
+RUN cargo build --release --bin rust-teraform-backend
 
-# Copy migrations (needed for sqlx::migrate! macro at compile time)
-COPY migrations ./migrations
-
-# Build only dependencies to cache them
-RUN cargo build --release
-RUN rm src/*.rs
-
-# Copy the actual source code
-COPY src ./src
-# Build the application
-# We need to touch the main.rs to ensure a rebuild
-RUN touch src/main.rs
-RUN cargo build --release
-
-# Use a minimal base image for the runtime
-# cc-debian12 includes the C standard library which Rust needs, but is very small
+# Runtime stage
 FROM gcr.io/distroless/cc-debian12
-
 WORKDIR /app
-
-# Copy the binary from the builder stage
 COPY --from=builder /app/target/release/rust-teraform-backend /app/server
-
-# Expose the port
 EXPOSE 8080
-
-# Run the binary
 CMD ["/app/server"]

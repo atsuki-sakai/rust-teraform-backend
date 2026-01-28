@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::domain::entities::Todo;
+use crate::domain::entities::{Todo, TodoId};
 use crate::domain::repositories::TodoRepository;
 use crate::shared::error::AppResult;
 
@@ -39,7 +39,7 @@ impl TodoRepository for PostgresTodoRepository {
         Ok(created)
     }
 
-    async fn find_by_id(&self, id: Uuid, user_id: Uuid) -> AppResult<Option<Todo>> {
+    async fn find_by_id(&self, id: TodoId, user_id: Uuid) -> AppResult<Option<Todo>> {
         let todo = sqlx::query_as::<_, Todo>(
             r#"
             SELECT id, user_id, title, description, completed, created_at, updated_at
@@ -55,7 +55,12 @@ impl TodoRepository for PostgresTodoRepository {
         Ok(todo)
     }
 
-    async fn find_all_by_user(&self, user_id: Uuid, limit: i64, offset: i64) -> AppResult<Vec<Todo>> {
+    async fn find_all_by_user(
+        &self,
+        user_id: Uuid,
+        limit: i64,
+        offset: i64,
+    ) -> AppResult<Vec<Todo>> {
         let todos = sqlx::query_as::<_, Todo>(
             r#"
             SELECT id, user_id, title, description, completed, created_at, updated_at
@@ -110,7 +115,7 @@ impl TodoRepository for PostgresTodoRepository {
         Ok(updated)
     }
 
-    async fn delete(&self, id: Uuid, user_id: Uuid) -> AppResult<()> {
+    async fn delete(&self, id: TodoId, user_id: Uuid) -> AppResult<()> {
         sqlx::query(
             r#"
             DELETE FROM todos

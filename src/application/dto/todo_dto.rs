@@ -31,8 +31,8 @@ pub struct TodoResponse {
 impl From<Todo> for TodoResponse {
     fn from(todo: Todo) -> Self {
         Self {
-            id: todo.id,
-            title: todo.title,
+            id: todo.id.0,
+            title: todo.title.value().to_string(),
             description: todo.description,
             completed: todo.completed,
             created_at: todo.created_at,

@@ -300,7 +300,8 @@ async fn test_delete_todo_success() {
 async fn test_delete_todo_not_found() {
     let (server, pool) = common::create_test_server().await;
 
-    let auth = common::register_test_user(&server, "delete_notfound@example.com", "password123").await;
+    let auth =
+        common::register_test_user(&server, "delete_notfound@example.com", "password123").await;
 
     let random_id = Uuid::new_v4();
     let response = server

@@ -178,7 +178,10 @@ fn format_endpoint(path: &str, method: &str, op: &utoipa::openapi::path::Operati
         md.push_str("**リクエストボディ**\n\n");
         if let Some(content) = body.content.get("application/json") {
             if let Some(schema) = &content.schema {
-                md.push_str(&format!("```json\n{}\n```\n\n", format_schema_example(schema)));
+                md.push_str(&format!(
+                    "```json\n{}\n```\n\n",
+                    format_schema_example(schema)
+                ));
             }
         }
     }
@@ -196,7 +199,9 @@ fn format_endpoint(path: &str, method: &str, op: &utoipa::openapi::path::Operati
     md
 }
 
-fn get_response_description(response: &utoipa::openapi::RefOr<utoipa::openapi::response::Response>) -> String {
+fn get_response_description(
+    response: &utoipa::openapi::RefOr<utoipa::openapi::response::Response>,
+) -> String {
     match response {
         utoipa::openapi::RefOr::T(r) => r.description.clone(),
         utoipa::openapi::RefOr::Ref(r) => r.ref_location.clone(),
@@ -206,18 +211,19 @@ fn get_response_description(response: &utoipa::openapi::RefOr<utoipa::openapi::r
 fn get_param_type(schema: &Option<utoipa::openapi::RefOr<utoipa::openapi::Schema>>) -> String {
     match schema {
         Some(utoipa::openapi::RefOr::T(s)) => get_schema_type_str(s),
-        Some(utoipa::openapi::RefOr::Ref(r)) => {
-            r.ref_location.split('/').next_back().unwrap_or("ref").to_string()
-        }
+        Some(utoipa::openapi::RefOr::Ref(r)) => r
+            .ref_location
+            .split('/')
+            .next_back()
+            .unwrap_or("ref")
+            .to_string(),
         None => "string".to_string(),
     }
 }
 
 fn get_schema_type_str(schema: &utoipa::openapi::Schema) -> String {
     match schema {
-        utoipa::openapi::Schema::Object(obj) => {
-            format_schema_type(&obj.schema_type)
-        }
+        utoipa::openapi::Schema::Object(obj) => format_schema_type(&obj.schema_type),
         utoipa::openapi::Schema::Array(arr) => {
             let item_type = match &arr.items {
                 utoipa::openapi::schema::ArrayItems::RefOrSchema(item) => get_schema_type(item),
@@ -233,12 +239,11 @@ fn format_schema_type(schema_type: &utoipa::openapi::schema::SchemaType) -> Stri
     match schema_type {
         utoipa::openapi::schema::SchemaType::Type(t) => type_to_string(t),
         utoipa::openapi::schema::SchemaType::AnyValue => "any".to_string(),
-        utoipa::openapi::schema::SchemaType::Array(types) => {
-            types.iter()
-                .map(type_to_string)
-                .collect::<Vec<_>>()
-                .join(" | ")
-        }
+        utoipa::openapi::schema::SchemaType::Array(types) => types
+            .iter()
+            .map(type_to_string)
+            .collect::<Vec<_>>()
+            .join(" | "),
     }
 }
 
@@ -285,9 +290,12 @@ fn format_schema(schema: &utoipa::openapi::RefOr<utoipa::openapi::Schema>) -> St
 fn get_schema_type(schema: &utoipa::openapi::RefOr<utoipa::openapi::Schema>) -> String {
     match schema {
         utoipa::openapi::RefOr::T(s) => get_schema_type_str(s),
-        utoipa::openapi::RefOr::Ref(r) => {
-            r.ref_location.split('/').next_back().unwrap_or("ref").to_string()
-        }
+        utoipa::openapi::RefOr::Ref(r) => r
+            .ref_location
+            .split('/')
+            .next_back()
+            .unwrap_or("ref")
+            .to_string(),
     }
 }
 

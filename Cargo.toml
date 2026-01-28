@@ -11,7 +11,13 @@ tokio = { version = "1.49.0", features = ["full"] }
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 
 # Database
-sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "migrate"] }
+sqlx = { version = "0.8.6", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "uuid",
+    "chrono",
+    "migrate",
+] }
 
 # Serialization
 serde = { version = "1.0.228", features = ["derive"] }
@@ -59,3 +65,11 @@ axum-test = "17"
 tower = "0.5"
 reqwest = { version = "0.12", features = ["json"] }
 tokio-test = "0.4"
+
+# Optimization profiles
+[profile.release]
+strip = true      # Automatically strip symbols from the binary.
+opt-level = "z"   # Optimize for size.
+lto = true        # Enable Link Time Optimization
+codegen-units = 1 # Reduce parallel code generation to improve optimization
+panic = "abort"   # Abort on panic

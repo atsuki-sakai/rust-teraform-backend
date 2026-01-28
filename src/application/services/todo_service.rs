@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::application::dto::{
     CreateTodoRequest, PaginationQuery, TodoListResponse, TodoResponse, UpdateTodoRequest,
 };
-use crate::domain::entities::Todo;
+use crate::domain::entities::{Todo, TodoTitle};
 use crate::domain::repositories::TodoRepository;
 use crate::shared::error::{AppError, AppResult};
 
@@ -17,8 +17,13 @@ impl TodoService {
         Self { todo_repository }
     }
 
-    pub async fn create(&self, user_id: Uuid, request: CreateTodoRequest) -> AppResult<TodoResponse> {
-        let todo = Todo::new(user_id, request.title, request.description);
+    pub async fn create(
+        &self,
+        user_id: Uuid,
+        request: CreateTodoRequest,
+    ) -> AppResult<TodoResponse> {
+        let title = TodoTitle::new(request.title).map_err(AppError::Validation)?;
+        let todo = Todo::new(user_id, title, request.description);
         let created = self.todo_repository.create(&todo).await?;
         Ok(TodoResponse::from(created))
     }
@@ -26,7 +31,7 @@ impl TodoService {
     pub async fn get(&self, user_id: Uuid, todo_id: Uuid) -> AppResult<TodoResponse> {
         let todo = self
             .todo_repository
-            .find_by_id(todo_id, user_id)
+            .find_by_id(todo_id.into(), user_id)
             .await?
             .ok_or_else(|| AppError::NotFound("Todo not found".to_string()))?;
 
@@ -61,11 +66,16 @@ impl TodoService {
     ) -> AppResult<TodoResponse> {
         let mut todo = self
             .todo_repository
-            .find_by_id(todo_id, user_id)
+            .find_by_id(todo_id.into(), user_id)
             .await?
             .ok_or_else(|| AppError::NotFound("Todo not found".to_string()))?;
 
-        todo.update(request.title, request.description, request.completed);
+        let title = match request.title {
+            Some(t) => Some(TodoTitle::new(t).map_err(AppError::Validation)?),
+            None => None,
+        };
+
+        todo.update(title, request.description, request.completed);
 
         let updated = self.todo_repository.update(&todo).await?;
         Ok(TodoResponse::from(updated))
@@ -74,10 +84,10 @@ impl TodoService {
     pub async fn delete(&self, user_id: Uuid, todo_id: Uuid) -> AppResult<()> {
         // Check if todo exists
         self.todo_repository
-            .find_by_id(todo_id, user_id)
+            .find_by_id(todo_id.into(), user_id)
             .await?
             .ok_or_else(|| AppError::NotFound("Todo not found".to_string()))?;
 
-        self.todo_repository.delete(todo_id, user_id).await
+        self.todo_repository.delete(todo_id.into(), user_id).await
     }
 }

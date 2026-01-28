@@ -80,8 +80,12 @@ impl AuthService {
     }
 
     fn generate_tokens(&self, user: &User) -> AppResult<AuthResponse> {
-        let access_token = self.jwt_config.generate_access_token(user.id, &user.email)?;
-        let refresh_token = self.jwt_config.generate_refresh_token(user.id, &user.email)?;
+        let access_token = self
+            .jwt_config
+            .generate_access_token(user.id, &user.email)?;
+        let refresh_token = self
+            .jwt_config
+            .generate_refresh_token(user.id, &user.email)?;
 
         Ok(AuthResponse {
             access_token,

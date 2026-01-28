@@ -23,8 +23,9 @@ impl TodoService {
 例えば `create` メソッドを見てみましょう。
 ```rust
 pub async fn create(&self, user_id: Uuid, request: CreateTodoRequest) -> AppResult<TodoResponse> {
-    // 1. エンティティの作成
-    let todo = Todo::new(user_id, request.title, request.description);
+    // 1. バリデーションとエンティティの作成
+    let title = TodoTitle::new(request.title).map_err(AppError::Validation)?;
+    let todo = Todo::new(user_id, title, request.description);
 
     // 2. リポジトリを使って保存
     let created = self.todo_repository.create(&todo).await?;

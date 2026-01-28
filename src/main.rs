@@ -52,7 +52,7 @@ async fn main() {
         .parse()
         .expect("PORT must be a number");
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
     println!("\n{}", "=".repeat(50));
     println!("  Todo API Server Started");

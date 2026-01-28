@@ -30,6 +30,8 @@ Ok(Json(response))
 ### create_todo (新規作成)
 `Json(request)` でリクエストボディ（JSONデータ）を受け取り、Rust の構造体 `CreateTodoRequest` に自動変換しています。
 
+以前はハンドラ内で複雑なバリデーションを書く必要があったかもしれませんが、現在は **ドメイン層 (Service内での `TodoTitle::new`) でバリデーションが行われる** ため、ハンドラは単にエラーを返せば良いだけになっています。これが「ニュータイプパターン」の恩恵です。
+
 ## API ドキュメント (utoipa)
 ```rust
 #[utoipa::path(...)]

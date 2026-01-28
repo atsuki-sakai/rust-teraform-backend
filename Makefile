@@ -45,6 +45,9 @@ run:
 dev:
 	RUST_LOG=debug cargo run
 
+dev-up: db-up
+	cargo run
+
 test:
 	cargo test
 
@@ -73,6 +76,9 @@ docs:
 
 docker-up:
 	docker compose up -d
+
+docker-up-build:
+	docker compose up -d --build
 
 docker-down:
 	docker compose down

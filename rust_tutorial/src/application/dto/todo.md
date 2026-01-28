@@ -42,11 +42,17 @@ pub struct TodoResponse {
     - API がレスポンスを返す時に、Rust のデータをきれいな JSON にしてクライアントに送るために必須です。 ... }
 
 impl From<Todo> for TodoResponse {
-    fn from(todo: Todo) -> Self { ... }
+    fn from(todo: Todo) -> Self {
+        Self {
+            id: todo.id.0, // Newtype から中身を取り出す
+            title: todo.title.value().to_string(), // 専用メソッドで取り出す
+            // ...
+        }
+    }
 }
 ```
 - `TodoResponse`: API がクライアントに返すデータの形です。
-- `impl From<Todo> for TodoResponse`: 内部データの `Todo` (Entity) から、表示用の `TodoResponse` に変換するロジックです。これにより `todo.into()` と書くだけで変換できるようになります。
+- `impl From<Todo> for TodoResponse`: 内部データの `Todo` (Newtypeを使ったEntity) から、表示用の `TodoResponse` (プリミティブ型) に変換します。
 
 ## ページネーション
 ```rust

@@ -17,8 +17,9 @@ use rust_teraform_backend::presentation::routes::{auth_routes, todo_routes};
 
 /// Create a test database pool
 pub async fn create_test_pool() -> PgPool {
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://todo_user:todo_password@localhost:5433/todo_db".to_string());
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        "postgres://todo_user:todo_password@localhost:5433/todo_db".to_string()
+    });
 
     PgPoolOptions::new()
         .max_connections(5)
