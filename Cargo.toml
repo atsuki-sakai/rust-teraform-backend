@@ -66,6 +66,7 @@ axum-test = "17"
 tower = "0.5"
 reqwest = { version = "0.12", features = ["json"] }
 tokio-test = "0.4"
+mockall = "0.13"
 
 # Optimization profiles
 [profile.release]
