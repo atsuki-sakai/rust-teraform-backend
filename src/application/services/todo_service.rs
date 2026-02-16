@@ -372,10 +372,7 @@ mod tests {
         assert!(result.is_ok());
         let response = result.unwrap();
         assert_eq!(response.title, "New Title");
-        assert_eq!(
-            response.description,
-            Some("New Description".to_string())
-        );
+        assert_eq!(response.description, Some("New Description".to_string()));
         assert_eq!(response.completed, true);
     }
 
