@@ -373,7 +373,7 @@ mod tests {
         let response = result.unwrap();
         assert_eq!(response.title, "New Title");
         assert_eq!(response.description, Some("New Description".to_string()));
-        assert_eq!(response.completed, true);
+        assert!(response.completed);
     }
 
     #[tokio::test]
