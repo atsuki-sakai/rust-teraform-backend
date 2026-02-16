@@ -11,7 +11,7 @@ use rust_teraform_backend::presentation::openapi::ApiDoc;
 use rust_teraform_backend::presentation::routes::{auth_routes, todo_routes};
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing
     tracing_subscriber::registry()
         .with(
@@ -22,9 +22,7 @@ async fn main() {
         .init();
 
     // Initialize application state
-    let state = AppState::new()
-        .await
-        .expect("Failed to initialize app state");
+    let state = AppState::new().await?;
 
     // Build CORS layer
     let cors = CorsLayer::new()
@@ -49,8 +47,7 @@ async fn main() {
     // Get port from environment or default
     let port: u16 = std::env::var("PORT")
         .unwrap_or_else(|_| "8080".to_string())
-        .parse()
-        .expect("PORT must be a number");
+        .parse()?;
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
@@ -64,9 +61,10 @@ async fn main() {
 
     tracing::info!("Server listening on {}", addr);
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-    tokio::net::TcpListener::bind(addr).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
 }
 
 async fn health_check() -> &'static str {
