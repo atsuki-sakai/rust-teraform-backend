@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::application::dto::{AuthResponse, LoginRequest, RefreshRequest, RegisterRequest};
 use crate::domain::entities::User;
 use crate::domain::repositories::UserRepository;
+use crate::domain::value_objects::{Email, PasswordHash};
 use crate::infrastructure::auth::jwt::{JwtConfig, TokenType};
 use crate::infrastructure::auth::password::{hash_password, verify_password};
 use crate::shared::error::{AppError, AppResult};
@@ -21,10 +22,13 @@ impl AuthService {
     }
 
     pub async fn register(&self, request: RegisterRequest) -> AppResult<AuthResponse> {
+        // Validate and create Email
+        let email = Email::new(request.email).map_err(AppError::Validation)?;
+
         // Check if user already exists
         if self
             .user_repository
-            .find_by_email(&request.email)
+            .find_by_email(&email)
             .await?
             .is_some()
         {
@@ -32,10 +36,11 @@ impl AuthService {
         }
 
         // Hash password
-        let password_hash = hash_password(&request.password)?;
+        let password_hash_str = hash_password(&request.password)?;
+        let password_hash = PasswordHash::new(password_hash_str);
 
         // Create user
-        let user = User::new(request.email, password_hash);
+        let user = User::new(email, password_hash);
         let created_user = self.user_repository.create(&user).await?;
 
         // Generate tokens
@@ -43,15 +48,18 @@ impl AuthService {
     }
 
     pub async fn login(&self, request: LoginRequest) -> AppResult<AuthResponse> {
+        // Validate Email
+        let email = Email::new(request.email).map_err(AppError::Validation)?;
+
         // Find user
         let user = self
             .user_repository
-            .find_by_email(&request.email)
+            .find_by_email(&email)
             .await?
             .ok_or(AppError::InvalidCredentials)?;
 
         // Verify password
-        if !verify_password(&request.password, &user.password_hash)? {
+        if !verify_password(&request.password, user.password_hash.value())? {
             return Err(AppError::InvalidCredentials);
         }
 
@@ -82,10 +90,10 @@ impl AuthService {
     fn generate_tokens(&self, user: &User) -> AppResult<AuthResponse> {
         let access_token = self
             .jwt_config
-            .generate_access_token(user.id, &user.email)?;
+            .generate_access_token(user.id, user.email.value())?;
         let refresh_token = self
             .jwt_config
-            .generate_refresh_token(user.id, &user.email)?;
+            .generate_refresh_token(user.id, user.email.value())?;
 
         Ok(AuthResponse {
             access_token,

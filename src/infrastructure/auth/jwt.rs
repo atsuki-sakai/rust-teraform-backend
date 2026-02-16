@@ -1,8 +1,8 @@
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
+use crate::domain::value_objects::UserId;
 use crate::shared::error::{AppError, AppResult};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -13,7 +13,7 @@ pub enum TokenType {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
-    pub sub: Uuid,
+    pub sub: UserId,
     pub email: String,
     pub exp: i64,
     pub iat: i64,
@@ -28,16 +28,24 @@ pub struct JwtConfig {
 }
 
 impl JwtConfig {
-    pub fn from_env() -> Self {
-        let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
-        Self {
+    pub fn from_env() -> AppResult<Self> {
+        let secret = std::env::var("JWT_SECRET")
+            .map_err(|_| AppError::Internal(anyhow::anyhow!("JWT_SECRET must be set")))?;
+
+        if secret.len() < 32 {
+            return Err(AppError::Internal(anyhow::anyhow!(
+                "JWT_SECRET must be at least 32 characters long"
+            )));
+        }
+
+        Ok(Self {
             secret,
             access_token_expires_in: Duration::minutes(15),
             refresh_token_expires_in: Duration::days(7),
-        }
+        })
     }
 
-    pub fn generate_access_token(&self, user_id: Uuid, email: &str) -> AppResult<String> {
+    pub fn generate_access_token(&self, user_id: UserId, email: &str) -> AppResult<String> {
         let now = Utc::now();
         let claims = Claims {
             sub: user_id,
@@ -55,7 +63,7 @@ impl JwtConfig {
         .map_err(AppError::from)
     }
 
-    pub fn generate_refresh_token(&self, user_id: Uuid, email: &str) -> AppResult<String> {
+    pub fn generate_refresh_token(&self, user_id: UserId, email: &str) -> AppResult<String> {
         let now = Utc::now();
         let claims = Claims {
             sub: user_id,

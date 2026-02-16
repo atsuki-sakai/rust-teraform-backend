@@ -19,7 +19,77 @@
 - **`src/presentation`**: API ハンドラ、ルーティング、ミドルウェア（インターフェース・アダプター層）
 - **`src/application`**: ビジネスロジック、ユースケース（Services）、DTO（アプリケーション・ロジック層）
 - **`src/domain`**: エンティティとリポジトリのインターフェース（エンタープライズ・ビジネスルール層）
+  - **`value_objects`**: 型安全性を保証する NewType パターンの実装
 - **`src/infrastructure`**: データベースの実装、設定、外部サービス（フレームワーク＆ドライバ層）
+
+## 🔒 型安全性と NewType パターン
+
+このプロジェクトでは、プリミティブ型の直接使用を避け、**NewType パターン**を採用することで型安全性とバグ防止を実現しています。
+
+### NewType パターンとは
+
+NewType パターンは、プリミティブ型（`String`, `Uuid`, `i64`, `bool` など）を専用の型でラップすることで、コンパイル時に型の誤用を防ぐ設計パターンです。
+
+### 実装されている Value Objects
+
+#### User 関連型 ([user_types.rs](src/domain/value_objects/user_types.rs))
+- **`UserId`**: `Uuid` をラップし、ユーザー識別子として型安全に使用
+- **`Email`**: メール形式バリデーション付き文字列型（自動的に小文字化、`@` と `.` の検証）
+- **`PasswordHash`**: パスワードハッシュを保持する型（シリアライズ時には非公開）
+
+#### Todo 関連型 ([todo_types.rs](src/domain/value_objects/todo_types.rs))
+- **`TodoId`**: `Uuid` をラップし、Todo 識別子として型安全に使用
+- **`TodoTitle`**: 1〜255文字の検証付きタイトル型
+- **`TodoDescription`**: 最大1000文字の検証付き説明文型
+- **`CompletionStatus`**: `Pending` / `Completed` の2状態を持つ enum（DB では boolean で保存）
+
+#### DTO 関連型 ([todo_dto.rs](src/application/dto/todo_dto.rs))
+- **`Page`**: ページ番号（最小値: 1）
+- **`PerPage`**: 1ページあたりのアイテム数（範囲: 1〜100）
+- **`Offset`**: ページとアイテム数から自動計算されるオフセット値
+
+### NewType の利点
+
+```rust
+// ❌ 間違った使い方（プリミティブ型を直接使用）
+fn update_todo(user_id: Uuid, todo_id: Uuid) { ... }
+// 引数の順序を間違えてもコンパイルエラーにならない！
+update_todo(todo_id, user_id); // コンパイル成功、実行時エラー
+
+// ✅ 正しい使い方（NewType パターン）
+fn update_todo(user_id: UserId, todo_id: TodoId) { ... }
+// 引数の順序を間違えるとコンパイルエラーになる！
+update_todo(todo_id, user_id); // コンパイルエラー！
+```
+
+### バリデーション例
+
+```rust
+// Email の作成とバリデーション
+let email = Email::new("user@example.com".to_string())?; // ✅ OK
+let invalid = Email::new("invalid".to_string()?; // ❌ Err("Invalid email format")
+
+// TodoTitle の長さ検証
+let title = TodoTitle::new("買い物".to_string())?; // ✅ OK
+let too_long = TodoTitle::new("あ".repeat(256))?; // ❌ Err("Title cannot be longer than 255 characters")
+
+// CompletionStatus の使用
+let status = CompletionStatus::Pending;
+status.toggle(); // CompletionStatus::Completed に変わる
+status.is_completed(); // true
+```
+
+### SQLx との統合
+
+NewType は `#[sqlx(transparent)]` を使用することで、データベースとシームレスに統合されます：
+
+```rust
+#[derive(sqlx::Type)]
+#[sqlx(transparent)]
+pub struct TodoTitle(String);
+
+// SQLx は自動的に String として保存/読み込みを行う
+```
 
 ## 🚀 はじめ方
 

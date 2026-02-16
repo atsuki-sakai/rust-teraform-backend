@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use sqlx::PgPool;
-use uuid::Uuid;
 
 use crate::domain::entities::User;
 use crate::domain::repositories::UserRepository;
+use crate::domain::value_objects::{Email, UserId};
 use crate::shared::error::AppResult;
 
 pub struct PostgresUserRepository {
@@ -37,7 +37,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(created)
     }
 
-    async fn find_by_id(&self, id: Uuid) -> AppResult<Option<User>> {
+    async fn find_by_id(&self, id: UserId) -> AppResult<Option<User>> {
         let user = sqlx::query_as::<_, User>(
             r#"
             SELECT id, email, password_hash, created_at, updated_at
@@ -52,7 +52,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(user)
     }
 
-    async fn find_by_email(&self, email: &str) -> AppResult<Option<User>> {
+    async fn find_by_email(&self, email: &Email) -> AppResult<Option<User>> {
         let user = sqlx::query_as::<_, User>(
             r#"
             SELECT id, email, password_hash, created_at, updated_at

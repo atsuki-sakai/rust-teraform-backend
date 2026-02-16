@@ -42,7 +42,7 @@ impl AppState {
         let user_repository: Arc<dyn UserRepository> =
             Arc::new(PostgresUserRepository::new(db_pool.clone()));
 
-        let jwt_config = JwtConfig::from_env();
+        let jwt_config = JwtConfig::from_env()?;
 
         Ok(Self {
             db_pool,

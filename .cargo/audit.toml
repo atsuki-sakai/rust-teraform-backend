@@ -1,0 +1,8 @@
+[advisories]
+# RSA脆弱性 (RUSTSEC-2023-0071)
+# sqlx-macros-core がコンパイル時の依存関係として sqlx-mysql を含んでいます。
+# 実際には PostgreSQL のみを使用しており、MySQL のコードは実行されません。
+# この脆弱性は MySQL の暗号化接続に関するものであり、本プロジェクトには影響しません。
+ignore = [
+    "RUSTSEC-2023-0071",
+]

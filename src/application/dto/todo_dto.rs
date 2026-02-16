@@ -5,6 +5,48 @@ use uuid::Uuid;
 
 use crate::domain::entities::Todo;
 
+/// Page number newtype
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+pub struct Page(i64);
+
+impl Page {
+    pub fn new(value: Option<i64>) -> Self {
+        Self(value.unwrap_or(1).max(1))
+    }
+
+    pub fn value(&self) -> i64 {
+        self.0
+    }
+}
+
+/// Items per page newtype
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+pub struct PerPage(i64);
+
+impl PerPage {
+    pub fn new(value: Option<i64>) -> Self {
+        Self(value.unwrap_or(20).clamp(1, 100))
+    }
+
+    pub fn value(&self) -> i64 {
+        self.0
+    }
+}
+
+/// Offset newtype
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+pub struct Offset(i64);
+
+impl Offset {
+    pub fn from_page(page: Page, per_page: PerPage) -> Self {
+        Self((page.value() - 1) * per_page.value())
+    }
+
+    pub fn value(&self) -> i64 {
+        self.0
+    }
+}
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateTodoRequest {
     pub title: String,
@@ -33,8 +75,8 @@ impl From<Todo> for TodoResponse {
         Self {
             id: todo.id.0,
             title: todo.title.value().to_string(),
-            description: todo.description,
-            completed: todo.completed,
+            description: todo.description.map(|d| d.value().to_string()),
+            completed: todo.completed.into(),
             created_at: todo.created_at,
             updated_at: todo.updated_at,
         }
@@ -56,15 +98,15 @@ pub struct PaginationQuery {
 }
 
 impl PaginationQuery {
-    pub fn page(&self) -> i64 {
-        self.page.unwrap_or(1).max(1)
+    pub fn page(&self) -> Page {
+        Page::new(self.page)
     }
 
-    pub fn per_page(&self) -> i64 {
-        self.per_page.unwrap_or(20).clamp(1, 100)
+    pub fn per_page(&self) -> PerPage {
+        PerPage::new(self.per_page)
     }
 
-    pub fn offset(&self) -> i64 {
-        (self.page() - 1) * self.per_page()
+    pub fn offset(&self) -> Offset {
+        Offset::from_page(self.page(), self.per_page())
     }
 }

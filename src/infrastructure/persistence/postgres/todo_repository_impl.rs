@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use sqlx::PgPool;
-use uuid::Uuid;
 
-use crate::domain::entities::{Todo, TodoId};
+use crate::domain::entities::Todo;
 use crate::domain::repositories::TodoRepository;
+use crate::domain::value_objects::{TodoId, UserId};
 use crate::shared::error::AppResult;
 
 pub struct PostgresTodoRepository {
@@ -39,7 +39,7 @@ impl TodoRepository for PostgresTodoRepository {
         Ok(created)
     }
 
-    async fn find_by_id(&self, id: TodoId, user_id: Uuid) -> AppResult<Option<Todo>> {
+    async fn find_by_id(&self, id: TodoId, user_id: UserId) -> AppResult<Option<Todo>> {
         let todo = sqlx::query_as::<_, Todo>(
             r#"
             SELECT id, user_id, title, description, completed, created_at, updated_at
@@ -57,7 +57,7 @@ impl TodoRepository for PostgresTodoRepository {
 
     async fn find_all_by_user(
         &self,
-        user_id: Uuid,
+        user_id: UserId,
         limit: i64,
         offset: i64,
     ) -> AppResult<Vec<Todo>> {
@@ -79,7 +79,7 @@ impl TodoRepository for PostgresTodoRepository {
         Ok(todos)
     }
 
-    async fn count_by_user(&self, user_id: Uuid) -> AppResult<i64> {
+    async fn count_by_user(&self, user_id: UserId) -> AppResult<i64> {
         let count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(*) as count
@@ -115,7 +115,7 @@ impl TodoRepository for PostgresTodoRepository {
         Ok(updated)
     }
 
-    async fn delete(&self, id: TodoId, user_id: Uuid) -> AppResult<()> {
+    async fn delete(&self, id: TodoId, user_id: UserId) -> AppResult<()> {
         sqlx::query(
             r#"
             DELETE FROM todos

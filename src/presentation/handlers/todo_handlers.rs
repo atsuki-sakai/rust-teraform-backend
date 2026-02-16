@@ -9,6 +9,7 @@ use crate::application::dto::{
     CreateTodoRequest, PaginationQuery, TodoListResponse, TodoResponse, UpdateTodoRequest,
 };
 use crate::application::services::TodoService;
+use crate::domain::value_objects::TodoId;
 use crate::infrastructure::auth::jwt::Claims;
 use crate::infrastructure::config::AppState;
 use crate::shared::error::AppResult;
@@ -63,7 +64,7 @@ pub async fn get_todo(
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<TodoResponse>> {
     let service = TodoService::new(state.todo_repository.clone());
-    let response = service.get(claims.sub, id).await?;
+    let response = service.get(claims.sub, TodoId::from(id)).await?;
     Ok(Json(response))
 }
 
@@ -118,7 +119,7 @@ pub async fn update_todo(
     Json(request): Json<UpdateTodoRequest>,
 ) -> AppResult<Json<TodoResponse>> {
     let service = TodoService::new(state.todo_repository.clone());
-    let response = service.update(claims.sub, id, request).await?;
+    let response = service.update(claims.sub, TodoId::from(id), request).await?;
     Ok(Json(response))
 }
 
@@ -145,6 +146,6 @@ pub async fn delete_todo(
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
     let service = TodoService::new(state.todo_repository.clone());
-    service.delete(claims.sub, id).await?;
+    service.delete(claims.sub, TodoId::from(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }

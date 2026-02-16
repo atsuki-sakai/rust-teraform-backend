@@ -4,10 +4,11 @@ use utoipa::{
 };
 
 use crate::application::dto::{
-    AuthResponse, CreateTodoRequest, LoginRequest, RefreshRequest, RegisterRequest,
-    TodoListResponse, TodoResponse, UpdateTodoRequest, UserResponse,
+    AuthResponse, CreateTodoRequest, LoginRequest, Offset, Page, PerPage, RefreshRequest,
+    RegisterRequest, TodoListResponse, TodoResponse, UpdateTodoRequest, UserResponse,
 };
 use crate::domain::entities::{Todo, User};
+use crate::domain::value_objects::UserId;
 use crate::presentation::handlers::{auth_handlers, todo_handlers};
 
 #[derive(OpenApi)]
@@ -26,6 +27,7 @@ use crate::presentation::handlers::{auth_handlers, todo_handlers};
         schemas(
             Todo,
             User,
+            UserId,
             RegisterRequest,
             LoginRequest,
             RefreshRequest,
@@ -35,6 +37,9 @@ use crate::presentation::handlers::{auth_handlers, todo_handlers};
             UpdateTodoRequest,
             TodoResponse,
             TodoListResponse,
+            Page,
+            PerPage,
+            Offset,
         )
     ),
     modifiers(&SecurityAddon),

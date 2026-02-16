@@ -1,16 +1,22 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use uuid::Uuid;
+use validator::Validate;
 
-#[derive(Debug, Deserialize, ToSchema)]
+use crate::domain::value_objects::UserId;
+
+#[derive(Debug, Deserialize, ToSchema, Validate)]
 pub struct RegisterRequest {
+    #[validate(email)]
     pub email: String,
+    #[validate(length(min = 8, max = 128))]
     pub password: String,
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Deserialize, ToSchema, Validate)]
 pub struct LoginRequest {
+    #[validate(email)]
     pub email: String,
+    #[validate(length(min = 1))]
     pub password: String,
 }
 
@@ -29,6 +35,6 @@ pub struct AuthResponse {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct UserResponse {
-    pub id: Uuid,
+    pub id: UserId,
     pub email: String,
 }
