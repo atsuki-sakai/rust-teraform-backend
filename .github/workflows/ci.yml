@@ -128,11 +128,32 @@ jobs:
         run: cargo audit
 
   # =============================================================================
+  # Container Security Scan
+  # =============================================================================
+  container-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t todo-api:${{ github.sha }} .
+
+      - name: Run Trivy scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: todo-api:${{ github.sha }}
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+  # =============================================================================
   # Build
   # =============================================================================
   build:
     name: Build
-    needs: [lint, test, security]
+    needs: [lint, test, security, container-scan]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

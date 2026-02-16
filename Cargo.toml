@@ -44,7 +44,7 @@ async-trait = "0.1"
 
 # Logging
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
 
 # Environment
 dotenvy = "0.15.7"
