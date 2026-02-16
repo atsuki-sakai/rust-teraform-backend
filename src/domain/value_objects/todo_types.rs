@@ -66,9 +66,10 @@ impl TodoDescription {
 }
 
 /// Completion status enum for type safety
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum CompletionStatus {
+    #[default]
     Pending,
     Completed,
 }
@@ -108,12 +109,6 @@ impl CompletionStatus {
             Self::Pending => Self::Completed,
             Self::Completed => Self::Pending,
         }
-    }
-}
-
-impl Default for CompletionStatus {
-    fn default() -> Self {
-        Self::Pending
     }
 }
 
@@ -213,7 +208,7 @@ mod tests {
         assert_eq!(CompletionStatus::from(true), CompletionStatus::Completed);
 
         // To bool
-        assert_eq!(bool::from(CompletionStatus::Pending), false);
-        assert_eq!(bool::from(CompletionStatus::Completed), true);
+        assert!(!bool::from(CompletionStatus::Pending));
+        assert!(bool::from(CompletionStatus::Completed));
     }
 }
