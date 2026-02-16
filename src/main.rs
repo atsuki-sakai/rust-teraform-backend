@@ -12,14 +12,29 @@ use rust_teraform_backend::presentation::routes::{auth_routes, todo_routes};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info,tower_http=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize tracing with JSON format for production
+    let log_format = std::env::var("LOG_FORMAT").unwrap_or_else(|_| "text".to_string());
+
+    match log_format.as_str() {
+        "json" => {
+            tracing_subscriber::registry()
+                .with(
+                    tracing_subscriber::EnvFilter::try_from_default_env()
+                        .unwrap_or_else(|_| "info,tower_http=debug".into()),
+                )
+                .with(tracing_subscriber::fmt::layer().json())
+                .init();
+        }
+        _ => {
+            tracing_subscriber::registry()
+                .with(
+                    tracing_subscriber::EnvFilter::try_from_default_env()
+                        .unwrap_or_else(|_| "info,tower_http=debug".into()),
+                )
+                .with(tracing_subscriber::fmt::layer())
+                .init();
+        }
+    }
 
     // Initialize application state
     let state = AppState::new().await?;
