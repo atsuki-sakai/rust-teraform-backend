@@ -153,6 +153,59 @@ graph TD
 すべてのインフラは `terraform/` ディレクトリで定義されています。
 Terraform コードの詳細な解説については、**[rust_tutorial/terraform.md](rust_tutorial/terraform.md)** をご覧ください。
 
+#### Terraform セットアップ
+
+1. **GCS バケットの作成（Terraform state 管理用）**:
+   ```bash
+   export PROJECT_ID=your-gcp-project-id
+   gsutil mb -p ${PROJECT_ID} -l asia-northeast1 gs://${PROJECT_ID}-terraform-state
+   gsutil versioning set on gs://${PROJECT_ID}-terraform-state
+   ```
+
+2. **Terraform の初期化**:
+   ```bash
+   cd terraform
+   terraform init
+   ```
+
+3. **インフラのデプロイ**:
+   ```bash
+   terraform plan
+   terraform apply
+   ```
+
+#### CI/CD (GitHub Actions) のセットアップ
+
+このプロジェクトでは、セキュリティ向上のため **Workload Identity Federation** を使用しています。
+
+**必要な GitHub Secrets**:
+- `WIF_PROVIDER`: Workload Identity プロバイダーの完全なリソース名
+  - 例: `projects/123456789/locations/global/workloadIdentityPools/github-pool/providers/github-provider`
+- `WIF_SERVICE_ACCOUNT`: デプロイに使用するサービスアカウント
+  - 例: `deploy@your-project.iam.gserviceaccount.com`
+- `GCP_PROJECT_ID`: GCP プロジェクト ID
+
+**Workload Identity の設定手順**:
+```bash
+# Workload Identity Pool の作成
+gcloud iam workload-identity-pools create github-pool \
+  --location=global \
+  --display-name="GitHub Actions Pool"
+
+# Provider の作成
+gcloud iam workload-identity-pools providers create-oidc github-provider \
+  --location=global \
+  --workload-identity-pool=github-pool \
+  --issuer-uri=https://token.actions.githubusercontent.com \
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
+  --attribute-condition="assertion.repository=='your-org/your-repo'"
+
+# サービスアカウントへの権限付与
+gcloud iam service-accounts add-iam-policy-binding deploy@your-project.iam.gserviceaccount.com \
+  --role=roles/iam.workloadIdentityUser \
+  --member="principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/attribute.repository/your-org/your-repo"
+```
+
 ## 📖 初心者向け Rust チュートリアル
 
 このコードベースのファイルごとの詳細な解説については、`rust_tutorial/` ディレクトリをチェックしてください。ソースコードの構造をミラーリングしており、各ファイルの目的を説明しています。
