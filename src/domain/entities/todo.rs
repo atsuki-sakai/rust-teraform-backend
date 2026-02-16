@@ -16,11 +16,7 @@ pub struct Todo {
 }
 
 impl Todo {
-    pub fn new(
-        user_id: UserId,
-        title: TodoTitle,
-        description: Option<TodoDescription>,
-    ) -> Self {
+    pub fn new(user_id: UserId, title: TodoTitle, description: Option<TodoDescription>) -> Self {
         let now = Utc::now();
         Self {
             id: TodoId::new(),

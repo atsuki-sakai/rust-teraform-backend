@@ -26,12 +26,7 @@ impl AuthService {
         let email = Email::new(request.email).map_err(AppError::Validation)?;
 
         // Check if user already exists
-        if self
-            .user_repository
-            .find_by_email(&email)
-            .await?
-            .is_some()
-        {
+        if self.user_repository.find_by_email(&email).await?.is_some() {
             return Err(AppError::Conflict("Email already registered".to_string()));
         }
 

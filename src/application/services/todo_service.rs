@@ -5,9 +5,7 @@ use crate::application::dto::{
 };
 use crate::domain::entities::Todo;
 use crate::domain::repositories::TodoRepository;
-use crate::domain::value_objects::{
-    CompletionStatus, TodoDescription, TodoId, TodoTitle, UserId,
-};
+use crate::domain::value_objects::{CompletionStatus, TodoDescription, TodoId, TodoTitle, UserId};
 use crate::shared::error::{AppError, AppResult};
 
 pub struct TodoService {
@@ -51,7 +49,11 @@ impl TodoService {
     ) -> AppResult<TodoListResponse> {
         let todos = self
             .todo_repository
-            .find_all_by_user(user_id, pagination.per_page().value(), pagination.offset().value())
+            .find_all_by_user(
+                user_id,
+                pagination.per_page().value(),
+                pagination.offset().value(),
+            )
             .await?;
 
         let total = self.todo_repository.count_by_user(user_id).await?;
@@ -82,7 +84,9 @@ impl TodoService {
             .transpose()?;
 
         let description = match request.description {
-            Some(desc) => Some(Some(TodoDescription::new(desc).map_err(AppError::Validation)?)),
+            Some(desc) => Some(Some(
+                TodoDescription::new(desc).map_err(AppError::Validation)?,
+            )),
             None => None,
         };
 

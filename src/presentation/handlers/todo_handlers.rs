@@ -119,7 +119,9 @@ pub async fn update_todo(
     Json(request): Json<UpdateTodoRequest>,
 ) -> AppResult<Json<TodoResponse>> {
     let service = TodoService::new(state.todo_repository.clone());
-    let response = service.update(claims.sub, TodoId::from(id), request).await?;
+    let response = service
+        .update(claims.sub, TodoId::from(id), request)
+        .await?;
     Ok(Json(response))
 }
 

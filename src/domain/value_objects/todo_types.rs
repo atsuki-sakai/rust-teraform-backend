@@ -199,8 +199,14 @@ mod tests {
         assert!(CompletionStatus::Completed.is_completed());
 
         // toggle
-        assert_eq!(CompletionStatus::Pending.toggle(), CompletionStatus::Completed);
-        assert_eq!(CompletionStatus::Completed.toggle(), CompletionStatus::Pending);
+        assert_eq!(
+            CompletionStatus::Pending.toggle(),
+            CompletionStatus::Completed
+        );
+        assert_eq!(
+            CompletionStatus::Completed.toggle(),
+            CompletionStatus::Pending
+        );
 
         // From bool
         assert_eq!(CompletionStatus::from(false), CompletionStatus::Pending);
