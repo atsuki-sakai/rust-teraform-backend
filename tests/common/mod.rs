@@ -8,7 +8,9 @@ use tower_http::trace::TraceLayer;
 
 use rust_teraform_backend::application::dto::AuthResponse;
 use rust_teraform_backend::domain::repositories::{TodoRepository, UserRepository};
+use rust_teraform_backend::domain::services::auth_traits::{PasswordHasher, TokenGenerator};
 use rust_teraform_backend::infrastructure::auth::jwt::JwtConfig;
+use rust_teraform_backend::infrastructure::auth::password::Argon2PasswordHasher;
 use rust_teraform_backend::infrastructure::config::AppState;
 use rust_teraform_backend::infrastructure::persistence::postgres::{
     PostgresTodoRepository, PostgresUserRepository,
@@ -53,17 +55,21 @@ pub async fn create_test_state(pool: PgPool) -> AppState {
     let user_repository: Arc<dyn UserRepository> =
         Arc::new(PostgresUserRepository::new(pool.clone()));
 
+    let password_hasher: Arc<dyn PasswordHasher> = Arc::new(Argon2PasswordHasher::new());
+
     let jwt_config = JwtConfig {
-        secret: "test-secret-key-for-testing-only".to_string(),
+        secret: "test-secret-key-for-testing-only-at-least-32-chars".to_string(),
         access_token_expires_in: chrono::Duration::minutes(15),
         refresh_token_expires_in: chrono::Duration::days(7),
     };
+    let token_generator: Arc<dyn TokenGenerator> = Arc::new(jwt_config);
 
     AppState {
         db_pool: pool,
         todo_repository,
         user_repository,
-        jwt_config,
+        password_hasher,
+        token_generator,
     }
 }
 

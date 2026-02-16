@@ -21,7 +21,11 @@ pub async fn register(
     State(state): State<AppState>,
     Json(request): Json<RegisterRequest>,
 ) -> AppResult<(StatusCode, Json<AuthResponse>)> {
-    let service = AuthService::new(state.user_repository.clone(), state.jwt_config.clone());
+    let service = AuthService::new(
+        state.user_repository.clone(),
+        state.password_hasher.clone(),
+        state.token_generator.clone(),
+    );
     let response = service.register(request).await?;
     Ok((StatusCode::CREATED, Json(response)))
 }
@@ -41,7 +45,11 @@ pub async fn login(
     State(state): State<AppState>,
     Json(request): Json<LoginRequest>,
 ) -> AppResult<Json<AuthResponse>> {
-    let service = AuthService::new(state.user_repository.clone(), state.jwt_config.clone());
+    let service = AuthService::new(
+        state.user_repository.clone(),
+        state.password_hasher.clone(),
+        state.token_generator.clone(),
+    );
     let response = service.login(request).await?;
     Ok(Json(response))
 }
@@ -61,7 +69,11 @@ pub async fn refresh(
     State(state): State<AppState>,
     Json(request): Json<RefreshRequest>,
 ) -> AppResult<Json<AuthResponse>> {
-    let service = AuthService::new(state.user_repository.clone(), state.jwt_config.clone());
+    let service = AuthService::new(
+        state.user_repository.clone(),
+        state.password_hasher.clone(),
+        state.token_generator.clone(),
+    );
     let response = service.refresh(request).await?;
     Ok(Json(response))
 }

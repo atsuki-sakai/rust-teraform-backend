@@ -4,7 +4,9 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 
 use crate::domain::repositories::{TodoRepository, UserRepository};
+use crate::domain::services::auth_traits::{PasswordHasher, TokenGenerator};
 use crate::infrastructure::auth::jwt::JwtConfig;
+use crate::infrastructure::auth::password::Argon2PasswordHasher;
 use crate::infrastructure::persistence::postgres::{
     PostgresTodoRepository, PostgresUserRepository,
 };
@@ -15,7 +17,8 @@ pub struct AppState {
     pub db_pool: PgPool,
     pub todo_repository: Arc<dyn TodoRepository>,
     pub user_repository: Arc<dyn UserRepository>,
-    pub jwt_config: JwtConfig,
+    pub password_hasher: Arc<dyn PasswordHasher>,
+    pub token_generator: Arc<dyn TokenGenerator>,
 }
 
 impl AppState {
@@ -42,13 +45,15 @@ impl AppState {
         let user_repository: Arc<dyn UserRepository> =
             Arc::new(PostgresUserRepository::new(db_pool.clone()));
 
-        let jwt_config = JwtConfig::from_env()?;
+        let password_hasher: Arc<dyn PasswordHasher> = Arc::new(Argon2PasswordHasher::new());
+        let token_generator: Arc<dyn TokenGenerator> = Arc::new(JwtConfig::from_env()?);
 
         Ok(Self {
             db_pool,
             todo_repository,
             user_repository,
-            jwt_config,
+            password_hasher,
+            token_generator,
         })
     }
 }

@@ -2,7 +2,8 @@ use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::value_objects::UserId;
+use crate::domain::services::auth_traits::{self, TokenClaims, TokenTypeEnum};
+use crate::domain::value_objects::{Email, UserId};
 use crate::shared::error::{AppError, AppResult};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -38,47 +39,57 @@ impl JwtConfig {
             )));
         }
 
-        Ok(Self {
+        Ok(Self::new(secret))
+    }
+
+    pub fn new(secret: String) -> Self {
+        Self {
             secret,
             access_token_expires_in: Duration::minutes(15),
             refresh_token_expires_in: Duration::days(7),
-        })
+        }
+    }
+
+    fn create_token(
+        &self,
+        user_id: UserId,
+        email: &str,
+        token_type: TokenType,
+        duration: Duration,
+    ) -> AppResult<String> {
+        let now = Utc::now();
+        let claims = Claims {
+            sub: user_id,
+            email: email.to_string(),
+            exp: (now + duration).timestamp(),
+            iat: now.timestamp(),
+            token_type,
+        };
+
+        encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(self.secret.as_bytes()),
+        )
+        .map_err(AppError::from)
     }
 
     pub fn generate_access_token(&self, user_id: UserId, email: &str) -> AppResult<String> {
-        let now = Utc::now();
-        let claims = Claims {
-            sub: user_id,
-            email: email.to_string(),
-            exp: (now + self.access_token_expires_in).timestamp(),
-            iat: now.timestamp(),
-            token_type: TokenType::Access,
-        };
-
-        encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(self.secret.as_bytes()),
+        self.create_token(
+            user_id,
+            email,
+            TokenType::Access,
+            self.access_token_expires_in,
         )
-        .map_err(AppError::from)
     }
 
     pub fn generate_refresh_token(&self, user_id: UserId, email: &str) -> AppResult<String> {
-        let now = Utc::now();
-        let claims = Claims {
-            sub: user_id,
-            email: email.to_string(),
-            exp: (now + self.refresh_token_expires_in).timestamp(),
-            iat: now.timestamp(),
-            token_type: TokenType::Refresh,
-        };
-
-        encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(self.secret.as_bytes()),
+        self.create_token(
+            user_id,
+            email,
+            TokenType::Refresh,
+            self.refresh_token_expires_in,
         )
-        .map_err(AppError::from)
     }
 
     pub fn verify_token(&self, token: &str) -> AppResult<Claims> {
@@ -89,6 +100,32 @@ impl JwtConfig {
         )?;
 
         Ok(token_data.claims)
+    }
+}
+
+impl auth_traits::TokenGenerator for JwtConfig {
+    fn generate_access_token(&self, user_id: UserId, email: &Email) -> AppResult<String> {
+        JwtConfig::generate_access_token(self, user_id, email.value())
+    }
+
+    fn generate_refresh_token(&self, user_id: UserId, email: &Email) -> AppResult<String> {
+        JwtConfig::generate_refresh_token(self, user_id, email.value())
+    }
+
+    fn verify_token(&self, token: &str) -> AppResult<TokenClaims> {
+        let claims = JwtConfig::verify_token(self, token)?;
+        Ok(TokenClaims {
+            user_id: claims.sub,
+            email: claims.email,
+            token_type: match claims.token_type {
+                TokenType::Access => TokenTypeEnum::Access,
+                TokenType::Refresh => TokenTypeEnum::Refresh,
+            },
+        })
+    }
+
+    fn access_token_expires_in(&self) -> i64 {
+        self.access_token_expires_in.num_seconds()
     }
 }
 
