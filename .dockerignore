@@ -1,0 +1,14 @@
+.git
+.env
+.env.local
+target/
+**/*.rs.bk
+.idea/
+.vscode/
+*.swp
+terraform/
+docs/
+README.md
+.gitignore
+Dockerfile
+docker-compose.yml

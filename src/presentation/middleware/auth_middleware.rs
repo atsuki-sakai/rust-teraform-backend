@@ -5,6 +5,7 @@ use axum::{
     response::Response,
 };
 
+use crate::domain::services::auth_traits::TokenTypeEnum;
 use crate::infrastructure::auth::jwt::{Claims, TokenType};
 use crate::infrastructure::config::AppState;
 use crate::shared::error::AppError;
@@ -24,23 +25,24 @@ pub async fn auth_middleware(
         .strip_prefix("Bearer ")
         .ok_or(AppError::Unauthorized)?;
 
-    let claims = state.jwt_config.verify_token(token)?;
+    let token_claims = state.token_generator.verify_token(token)?;
 
     // Verify token type is Access
-    if claims.token_type != TokenType::Access {
+    if token_claims.token_type != TokenTypeEnum::Access {
         return Err(AppError::Unauthorized);
     }
 
-    // Add claims to request extensions
+    // Convert TokenClaims to Infrastructure Claims for backward compatibility
+    let claims = Claims {
+        sub: token_claims.user_id,
+        email: token_claims.email,
+        exp: 0, // Not needed for handlers
+        iat: 0, // Not needed for handlers
+        token_type: TokenType::Access,
+    };
+
+    // Add claims to request extensions for use in handlers
     request.extensions_mut().insert(claims);
 
     Ok(next.run(request).await)
-}
-
-// Extractor for getting claims from request
-pub fn get_claims(request: &Request) -> Result<&Claims, AppError> {
-    request
-        .extensions()
-        .get::<Claims>()
-        .ok_or(AppError::Unauthorized)
 }
